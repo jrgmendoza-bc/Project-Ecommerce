@@ -11,15 +11,20 @@
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <header class="site-shell">
-    <div class="shell-bar">
+  <header class="site-shell" id="top">
+    <div class="shell-bar" role="navigation" aria-label="Primary navigation">
       <a class="shell-brand" href="#home" aria-label="MICROBOT home">
         <img src="assets/images/Logo/logo.png" alt="MICROBOT logo">
         <span>MICROBOT</span>
       </a>
-      <nav class="shell-nav" aria-label="Primary">
-        <a class="shell-link is-active" href="#home">Home</a>
-        <a class="shell-link" href="#products">Products</a>
+      <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="primaryNav" aria-label="Open menu">
+        <span></span>
+        <span></span>
+        <span></span>
+      </button>
+      <nav class="shell-nav" id="primaryNav" aria-label="Primary">
+        <a class="shell-link is-active" href="#home" data-nav="home">Home</a>
+        <a class="shell-link" href="#products" data-nav="products">Products</a>
         <a class="shell-link" href="#about">About</a>
         <a class="shell-link" href="#contact">Contact</a>
       </nav>
@@ -31,14 +36,15 @@
       <div class="hero-content">
         <p class="hero-eyebrow">MICROBOT</p>
         <h1 class="hero-title">Future Robotics.<br>Built for Real-World Use.</h1>
-        <p class="hero-copy">Engineering product catalog with direct Shopee access.</p>
+        <p class="hero-copy">Engineering practical electronics and robotics modules designed for learning, prototyping, and real deployments.</p>
         <a class="cta-button" href="#products">Browse Store</a>
       </div>
     </section>
 
     <section id="products" class="section-block products-section reveal">
-      <h2 class="section-title">Featured Products</h2>
-      <div id="productGrid" class="product-grid"></div>
+      <h2 class="section-title">Products</h2>
+      <p class="section-copy section-copy-compact">Explore the MICROBOT lineup and open each product for complete details, features, applications, and direct Shopee purchase.</p>
+      <div id="featuredGrid" class="product-grid"></div>
     </section>
 
     <section id="about" class="section-block reveal about-section">
@@ -64,7 +70,7 @@
           <img src="assets/images/Logo/logo.png" alt="MICROBOT logo">
           <span>MICROBOT</span>
         </div>
-        <p>Future-ready robotics, built for practical innovation.</p>
+        <p>Future-ready robotics systems built for practical innovation and real-world use.</p>
       </div>
       <div class="footer-col">
         <h3>Quick Links</h3>
@@ -72,6 +78,12 @@
         <a href="#products">Products</a>
         <a href="#about">About</a>
         <a href="#contact">Contact</a>
+      </div>
+      <div class="footer-col">
+        <h3>Products</h3>
+        <a href="product-detail.html?id=byou">BYOU / Build Your Own UNO</a>
+        <a href="product-detail.html?id=nano-expansion">Nano Expansion Board</a>
+        <a href="product-detail.html?id=rover-module">Rover Robotics Module</a>
       </div>
       <div class="footer-col">
         <h3>Connect</h3>
@@ -83,6 +95,7 @@
     <p class="copyright">&copy; 2026 MICROBOT. All rights reserved.</p>
   </footer>
 
+  <script src="product-data.js"></script>
   <script src="script.js"></script>
 </body>
 </html>

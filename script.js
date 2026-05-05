@@ -447,29 +447,13 @@ function setupFeaturedBannerCarousel() {
     autoTimer = null;
   };
 
-  carousel.addEventListener("click", (event) => {
-    if (event.target.closest(".fbc-cta")) {
-      return;
-    }
+  const prevBtn = carousel.querySelector(".fbc-arrow--prev");
+  const nextBtn = carousel.querySelector(".fbc-arrow--next");
 
-    const bounds = carousel.getBoundingClientRect();
-    const clickX = event.clientX - bounds.left;
-    const goPrevious = clickX < bounds.width / 2;
-
-    if (goPrevious) {
-      prev();
-    } else {
-      next();
-    }
-
-    startAuto();
-  });
+  if (prevBtn) prevBtn.addEventListener("click", () => { prev(); startAuto(); });
+  if (nextBtn) nextBtn.addEventListener("click", () => { next(); startAuto(); });
 
   carousel.addEventListener("keydown", (event) => {
-    if (event.target.closest(".fbc-cta")) {
-      return;
-    }
-
     if (event.key === "ArrowLeft") {
       event.preventDefault();
       prev();

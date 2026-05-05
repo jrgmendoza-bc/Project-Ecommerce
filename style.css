@@ -311,7 +311,6 @@ main {
   border-radius: var(--radius-lg);
   overflow: hidden;
   box-shadow: 0 0 0 1px rgba(255, 91, 49, 0.08), 0 16px 40px rgba(0, 0, 0, 0.32);
-  cursor: pointer;
   user-select: none;
 }
 
@@ -436,7 +435,7 @@ main {
   width: fit-content;
   transition: transform 0.18s ease, filter 0.18s ease;
   position: relative;
-  z-index: 3;
+  z-index: 5;
 }
 
 .fbc-cta:hover {
@@ -460,23 +459,36 @@ main {
   object-fit: contain;
 }
 
-/* Click zones (left = prev, right = next) */
-.fbc-zone {
+/* Nav arrows */
+.fbc-arrow {
   position: absolute;
-  top: 0;
-  bottom: 0;
-  width: 50%;
-  z-index: 4;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 6;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  background: rgba(0, 0, 0, 0.45);
+  color: #fff;
+  font-size: 16px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.18s ease;
 }
 
-.fbc-zone--prev {
-  left: 0;
-  cursor: w-resize;
+.fbc-arrow:hover {
+  background: rgba(255, 91, 49, 0.75);
 }
 
-.fbc-zone--next {
-  right: 0;
-  cursor: e-resize;
+.fbc-arrow--prev {
+  left: 14px;
+}
+
+.fbc-arrow--next {
+  right: 14px;
 }
 
 /* Dots */

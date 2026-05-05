@@ -2,6 +2,9 @@ function createProductCard(product) {
   const card = document.createElement("article");
   card.className = "product-card reveal";
   card.id = product.id;
+  card.setAttribute("role", "link");
+  card.setAttribute("tabindex", "0");
+  card.setAttribute("aria-label", `View ${product.name}`);
   card.innerHTML = `
     <div class="product-image">
       <img src="${product.images[0]}" alt="${product.name} product image">
@@ -15,6 +18,21 @@ function createProductCard(product) {
       </div>
     </div>
   `;
+
+  const detailUrl = `product-detail.html?id=${product.id}`;
+
+  card.addEventListener("click", (e) => {
+    if (e.target.closest("a, button")) return;
+    window.location.href = detailUrl;
+  });
+
+  card.addEventListener("keydown", (e) => {
+    if (e.key === "Enter" || e.key === " ") {
+      e.preventDefault();
+      window.location.href = detailUrl;
+    }
+  });
+
   return card;
 }
 
@@ -26,7 +44,118 @@ function renderProducts() {
     products.forEach((product) => {
       featuredHost.appendChild(createProductCard(product));
     });
+    setupCarousel();
   }
+}
+
+function setupCarousel() {
+  const track = document.getElementById("featuredGrid");
+  if (!track) return;
+
+  const wrapper = track.closest(".carousel-wrapper");
+  if (!wrapper) return;
+
+  const carousel = track.parentElement; // .featured-carousel
+  const prevBtn = wrapper.querySelector(".carousel-prev");
+  const nextBtn = wrapper.querySelector(".carousel-next");
+
+  const getScrollAmount = () => {
+    const card = track.querySelector(".product-card");
+    return card ? card.offsetWidth + 20 : 320;
+  };
+
+  if (prevBtn) {
+    prevBtn.addEventListener("click", () => {
+      carousel.scrollBy({ left: -getScrollAmount(), behavior: "smooth" });
+    });
+  }
+
+  if (nextBtn) {
+    nextBtn.addEventListener("click", () => {
+      carousel.scrollBy({ left: getScrollAmount(), behavior: "smooth" });
+    });
+  }
+
+  // Drag-to-scroll (mouse)
+  let isDragging = false;
+  let dragStartX = 0;
+  let dragScrollLeft = 0;
+  let didDrag = false;
+
+  carousel.addEventListener("mousedown", (e) => {
+    isDragging = true;
+    didDrag = false;
+    dragStartX = e.pageX - carousel.offsetLeft;
+    dragScrollLeft = carousel.scrollLeft;
+    carousel.style.cursor = "grabbing";
+  });
+
+  carousel.addEventListener("mouseleave", () => {
+    isDragging = false;
+    carousel.style.cursor = "";
+  });
+
+  carousel.addEventListener("mouseup", () => {
+    isDragging = false;
+    carousel.style.cursor = "";
+  });
+
+  carousel.addEventListener("mousemove", (e) => {
+    if (!isDragging) return;
+    e.preventDefault();
+    const x = e.pageX - carousel.offsetLeft;
+    const walk = (x - dragStartX) * 1.4;
+    if (Math.abs(walk) > 4) didDrag = true;
+    carousel.scrollLeft = dragScrollLeft - walk;
+  });
+
+  // Prevent card click after drag
+  carousel.addEventListener("click", (e) => {
+    if (didDrag) {
+      e.stopPropagation();
+      didDrag = false;
+    }
+  }, true);
+
+  // Touch swipe
+  let touchStartX = 0;
+  let touchScrollLeft = 0;
+
+  carousel.addEventListener("touchstart", (e) => {
+    touchStartX = e.touches[0].pageX;
+    touchScrollLeft = carousel.scrollLeft;
+  }, { passive: true });
+
+  carousel.addEventListener("touchmove", (e) => {
+    const walk = touchStartX - e.touches[0].pageX;
+    carousel.scrollLeft = touchScrollLeft + walk;
+  }, { passive: true });
+
+  // Auto-scroll
+  let autoTimer = null;
+
+  const startAuto = () => {
+    stopAuto();
+    autoTimer = setInterval(() => {
+      const maxScroll = carousel.scrollWidth - carousel.clientWidth;
+      if (maxScroll <= 0) return;
+      if (carousel.scrollLeft >= maxScroll - 4) {
+        carousel.scrollTo({ left: 0, behavior: "smooth" });
+      } else {
+        carousel.scrollBy({ left: getScrollAmount(), behavior: "smooth" });
+      }
+    }, 3800);
+  };
+
+  const stopAuto = () => {
+    if (autoTimer) clearInterval(autoTimer);
+    autoTimer = null;
+  };
+
+  startAuto();
+  carousel.addEventListener("mouseenter", stopAuto);
+  carousel.addEventListener("mouseleave", startAuto);
+  carousel.addEventListener("touchstart", stopAuto, { passive: true });
 }
 
 function renderProductDetail() {
@@ -154,6 +283,13 @@ function setupMobileNav() {
   });
 }
 
+function setHeroHeight() {
+  const hero = document.querySelector(".hero-section");
+  if (!hero) return;
+  const top = hero.getBoundingClientRect().top + window.scrollY;
+  hero.style.height = (window.innerHeight - top) + "px";
+}
+
 function setupRevealAnimation() {
   if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
     document.querySelectorAll(".reveal").forEach((element) => {
@@ -185,21 +321,42 @@ function setupActiveNav() {
   const links = [...document.querySelectorAll(".shell-link")];
   const path = window.location.pathname.split("/").pop() || "index.html";
 
-  if (path === "product-detail.html") {
+  const setActiveByHref = (targetHref) => {
     links.forEach((link) => {
-      link.classList.toggle("is-active", link.getAttribute("href") === "index.html#products");
+      link.classList.toggle("is-active", link.getAttribute("href") === targetHref);
     });
+  };
+
+  if (path === "product-detail.html") {
+    setActiveByHref("index.html#products");
     return;
   }
 
-  links.forEach((link) => {
-    link.classList.toggle("is-active", link.getAttribute("href") === "#home");
-  });
+  setActiveByHref("#home");
 
   const sectionLinks = links.filter((link) => link.getAttribute("href").startsWith("#"));
   const sections = sectionLinks
     .map((link) => document.querySelector(link.getAttribute("href")))
     .filter(Boolean);
+
+  const syncHashState = () => {
+    const { hash } = window.location;
+    if (hash && sectionLinks.some((link) => link.getAttribute("href") === hash)) {
+      setActiveByHref(hash);
+    }
+  };
+
+  sectionLinks.forEach((link) => {
+    link.addEventListener("click", () => {
+      setActiveByHref(link.getAttribute("href"));
+      if (link.getAttribute("href") === "#home") {
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      }
+    });
+  });
+
+  window.addEventListener("hashchange", syncHashState);
+  syncHashState();
 
   if (!sections.length) return;
 
@@ -222,12 +379,132 @@ function setupActiveNav() {
   sections.forEach((section) => sectionObserver.observe(section));
 }
 
+function setupFeaturedBannerCarousel() {
+  const carousel = document.getElementById("featuredBannerCarousel");
+  if (!carousel) return;
+
+  const slides = [...carousel.querySelectorAll(".fbc-slide")];
+  const dots = [...carousel.querySelectorAll(".fbc-dot")];
+  let current = 0;
+  let animating = false;
+  let autoTimer = null;
+
+  const goTo = (index, direction) => {
+    if (animating || index === current) return;
+    animating = true;
+
+    const outgoing = slides[current];
+    const incoming = slides[index];
+
+    incoming.classList.add("is-active");
+
+    // Set up incoming position off-screen while keeping it in the active state.
+    if (direction === "prev") {
+      incoming.classList.add("is-entering-from-left");
+    }
+    incoming.style.transition = "none";
+    incoming.style.opacity = "0";
+    incoming.style.transform = direction === "next" ? "translateX(60px)" : "translateX(-60px)";
+    incoming.style.pointerEvents = "none";
+
+    // Force reflow
+    incoming.getBoundingClientRect();
+    incoming.style.transition = "";
+
+    // Animate outgoing out
+    outgoing.classList.add("is-leaving");
+    outgoing.classList.remove("is-active");
+    outgoing.style.transform = direction === "next" ? "translateX(-60px)" : "translateX(60px)";
+
+    // Animate incoming in
+    incoming.style.opacity = "1";
+    incoming.style.transform = "translateX(0)";
+
+    setTimeout(() => {
+      outgoing.classList.remove("is-leaving");
+      outgoing.style.cssText = "";
+      incoming.classList.remove("is-entering-from-left");
+      incoming.style.cssText = "";
+
+      dots[current].classList.remove("is-active");
+      dots[index].classList.add("is-active");
+      current = index;
+      animating = false;
+    }, 440);
+  };
+
+  const next = () => goTo((current + 1) % slides.length, "next");
+  const prev = () => goTo((current - 1 + slides.length) % slides.length, "prev");
+
+  const startAuto = () => {
+    stopAuto();
+    autoTimer = setInterval(next, 4500);
+  };
+  const stopAuto = () => {
+    if (autoTimer) {
+      clearInterval(autoTimer);
+    }
+    autoTimer = null;
+  };
+
+  carousel.addEventListener("click", (event) => {
+    if (event.target.closest(".fbc-cta")) {
+      return;
+    }
+
+    const bounds = carousel.getBoundingClientRect();
+    const clickX = event.clientX - bounds.left;
+    const goPrevious = clickX < bounds.width / 2;
+
+    if (goPrevious) {
+      prev();
+    } else {
+      next();
+    }
+
+    startAuto();
+  });
+
+  carousel.addEventListener("keydown", (event) => {
+    if (event.target.closest(".fbc-cta")) {
+      return;
+    }
+
+    if (event.key === "ArrowLeft") {
+      event.preventDefault();
+      prev();
+      startAuto();
+    }
+
+    if (event.key === "ArrowRight") {
+      event.preventDefault();
+      next();
+      startAuto();
+    }
+  });
+
+  dots.forEach((dot, i) => {
+    dot.addEventListener("click", () => {
+      goTo(i, i > current ? "next" : "prev");
+      startAuto();
+    });
+  });
+
+  carousel.addEventListener("mouseenter", stopAuto);
+  carousel.addEventListener("mouseleave", startAuto);
+
+  startAuto();
+}
+
 function init() {
+  setHeroHeight();
+  window.addEventListener("resize", setHeroHeight);
   renderProducts();
   renderProductDetail();
   setupMobileNav();
   setupRevealAnimation();
   setupActiveNav();
+  setupFeaturedBannerCarousel();
 }
 
 document.addEventListener("DOMContentLoaded", init);
